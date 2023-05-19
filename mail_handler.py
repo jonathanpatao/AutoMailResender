@@ -6,10 +6,11 @@ import re
 
 
 class MailHandler:
-    def __init__(self):
+    def __init__(self, mail_account):
         self.outlook = win32.Dispatch('outlook.application').GetNamespace('MAPI')
 
-        self.automation_folder = self.outlook.Folders[0].Folders['Automation']
+        self.automation_folder = self.outlook.Folders[mail_account].Folders['Automation']
+        self.inbox = self.outlook.Folders[mail_account].Folders['תיבת דואר נכנס']
 
         self.valid_file_types = [
             '.pdf',
@@ -20,16 +21,14 @@ class MailHandler:
         pass
 
     def get_unprocessed_messages(self):
-        messages = self.automation_folder.Items
+        messages = [m for m in self.inbox.Items.Restrict("[categories] = 'UnProcessed'")]
         return messages
 
-    def delete_unprocessed_messages(self):
+    @staticmethod
+    def untag_message(message):
+        message.Categories = ''
+        message.Save()
         return
-        num_msgs = self.automation_folder.Items.Count
-        for _ in range(num_msgs):
-            self.automation_folder.Items.GetFirst().Delete()
-
-
     def is_valid_message(self, message):
         if message.Attachments.Count == 0:
             return False
